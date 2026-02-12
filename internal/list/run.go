@@ -23,13 +23,17 @@ type Project struct {
 	IsClean bool
 }
 
-func Run() error {
+func Run(depth int) error {
+	if depth < 1 {
+		depth = 1
+	}
+
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	projects, err := scanProjects(currentDir)
+	projects, err := scanProjects(currentDir, depth, 0)
 	if err != nil {
 		return err
 	}
@@ -44,10 +48,10 @@ func Run() error {
 
 	for _, proj := range projects {
 		if proj.IsClean {
-			_, _ = projectColor.Printf("%-30s ", proj.Name)
+			_, _ = projectColor.Printf("%-50s ", proj.Name)
 			_, _ = cleanColor.Println("✅")
 		} else {
-			_, _ = projectColor.Printf("%-30s ", proj.Name)
+			_, _ = projectColor.Printf("%-50s ", proj.Name)
 			_, _ = dirtyColor.Println("❌")
 		}
 	}
@@ -55,7 +59,7 @@ func Run() error {
 	return nil
 }
 
-func scanProjects(dir string) ([]*Project, error) {
+func scanProjects(dir string, maxDepth, currentDepth int) ([]*Project, error) {
 	var projects []*Project
 
 	entries, err := os.ReadDir(dir)
@@ -74,11 +78,22 @@ func scanProjects(dir string) ([]*Project, error) {
 		// 检查是否是 Git 项目
 		if _, err := os.Stat(gitPath); err == nil || os.IsExist(err) {
 			isClean := checkIfClean(projectPath)
+			// 计算相对路径显示
+			relPath, _ := filepath.Rel(dir, projectPath)
+			if currentDepth > 0 {
+				relPath = filepath.Join(strings.Repeat("../", currentDepth), relPath)
+			}
 			projects = append(projects, &Project{
-				Name:    entry.Name(),
+				Name:    relPath,
 				Path:    projectPath,
 				IsClean: isClean,
 			})
+		} else if currentDepth < maxDepth-1 {
+			// 继续递归扫描子目录
+			subProjects, err := scanProjects(projectPath, maxDepth, currentDepth+1)
+			if err == nil {
+				projects = append(projects, subProjects...)
+			}
 		}
 	}
 
