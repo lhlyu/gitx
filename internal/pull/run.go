@@ -61,7 +61,7 @@ func Run(depth int) error {
 	for _, result := range results {
 		if result.Success {
 			_, _ = projectColor.Printf("%-50s ", result.Name)
-			_, _ = successColor.Println("✅")
+			_, _ = successColor.Printf("✅ %s\n", result.Message)
 		} else {
 			_, _ = projectColor.Printf("%-50s ", result.Name)
 			_, _ = errorColor.Printf("❌ %s\n", result.Message)
@@ -139,6 +139,17 @@ func pullRepo(projectPath, projectName string) *Result {
 		Name:    projectName,
 		Path:    projectPath,
 		Success: true,
-		Message: strings.TrimSpace(string(out)),
+		Message: classifyPullOutput(string(out)),
 	}
+}
+
+func classifyPullOutput(out string) string {
+	output := strings.ToLower(strings.TrimSpace(out))
+	if output == "" {
+		return "已更新"
+	}
+	if strings.Contains(output, "already up to date") || strings.Contains(output, "already up-to-date") {
+		return "已是最新"
+	}
+	return "已更新"
 }

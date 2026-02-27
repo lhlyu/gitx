@@ -63,7 +63,7 @@ func Run(depth int) error {
 	for _, result := range results {
 		if result.Success {
 			_, _ = projectColor.Printf("%-50s ", result.Name)
-			_, _ = successColor.Println("✅")
+			_, _ = successColor.Printf("✅ %s\n", result.Message)
 		} else {
 			_, _ = projectColor.Printf("%-50s ", result.Name)
 			_, _ = errorColor.Printf("❌ %s\n", result.Message)
