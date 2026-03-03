@@ -14,3 +14,9 @@ func (c *Client) Run(args ...string) ([]byte, error) {
 	cmd := exec.Command("git", args...)
 	return cmd.CombinedOutput()
 }
+
+func (c *Client) RunInDir(dir string, args ...string) ([]byte, error) {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	return cmd.CombinedOutput()
+}

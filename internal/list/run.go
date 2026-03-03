@@ -21,6 +21,7 @@ type Project struct {
 	Name    string
 	Path    string
 	IsClean bool
+	Branch  string
 }
 
 func Run(depth int) error {
@@ -47,11 +48,17 @@ func Run(depth int) error {
 	_, _ = infoColor.Println()
 
 	for _, proj := range projects {
+		branch := proj.Branch
+		if branch == "" {
+			branch = "(unknown)"
+		}
 		if proj.IsClean {
 			_, _ = projectColor.Printf("%-50s ", proj.Name)
+			_, _ = infoColor.Printf("%-18s ", branch)
 			_, _ = cleanColor.Println("✅")
 		} else {
 			_, _ = projectColor.Printf("%-50s ", proj.Name)
+			_, _ = infoColor.Printf("%-18s ", branch)
 			_, _ = dirtyColor.Println("❌")
 		}
 	}
@@ -78,6 +85,7 @@ func scanProjects(dir string, maxDepth, currentDepth int) ([]*Project, error) {
 		// 检查是否是 Git 项目
 		if _, err := os.Stat(gitPath); err == nil || os.IsExist(err) {
 			isClean := checkIfClean(projectPath)
+			branch := currentBranch(projectPath)
 			// 计算相对路径显示
 			relPath, _ := filepath.Rel(dir, projectPath)
 			if currentDepth > 0 {
@@ -87,6 +95,7 @@ func scanProjects(dir string, maxDepth, currentDepth int) ([]*Project, error) {
 				Name:    relPath,
 				Path:    projectPath,
 				IsClean: isClean,
+				Branch:  branch,
 			})
 		} else if currentDepth < maxDepth-1 {
 			// 继续递归扫描子目录
@@ -103,20 +112,26 @@ func scanProjects(dir string, maxDepth, currentDepth int) ([]*Project, error) {
 func checkIfClean(projectPath string) bool {
 	client := git.NewClient()
 
-	// 临时切换到项目目录执行 git 命令
-	originalDir, _ := os.Getwd()
-	defer func(dir string) {
-		_ = os.Chdir(dir)
-	}(originalDir)
-
-	if err := os.Chdir(projectPath); err != nil {
-		return false
-	}
-
-	out, err := client.Run("status", "--porcelain")
+	out, err := client.RunInDir(projectPath, "status", "--porcelain")
 	if err != nil {
 		return false
 	}
 
 	return strings.TrimSpace(string(out)) == ""
+}
+
+func currentBranch(projectPath string) string {
+	client := git.NewClient()
+
+	out, err := client.RunInDir(projectPath, "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return ""
+	}
+
+	branch := strings.TrimSpace(string(out))
+	if branch == "HEAD" {
+		return "(detached)"
+	}
+
+	return branch
 }
