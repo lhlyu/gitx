@@ -17,6 +17,7 @@ go install github.com/lhlyu/gitx@latest
 | `gitx pull [depth]`  | 拉取最新代码并显示每个项目是否更新（默认 depth=0，表示只拉取当前目录） |
 | `gitx undo [depth]`  | 撤销工作区和暂存区的修改并显示结果（默认 depth=0）           |
 | `gitx clean [depth]` | 清理仓库并显示清理结果，重置到最新提交状态 ⚠️（默认 depth=0）    |
+| `gitx reset <steps>` | 将当前仓库硬重置到前 N 个提交，即执行 `git reset --hard HEAD~N` ⚠️ |
 
 ## 🛠️ 开发
 
@@ -30,14 +31,16 @@ gitx/
 │   ├── list.go
 │   ├── pull.go
 │   ├── undo.go
-│   └── clean.go
+│   ├── clean.go
+│   └── reset.go
 ├── internal/         # 内部实现
 │   ├── git/         # Git 客户端封装
 │   ├── info/        # info 命令实现
 │   ├── list/        # list 命令实现
 │   ├── pull/        # pull 命令实现
 │   ├── undo/        # undo 命令实现
-│   └── clean/       # clean 命令实现
+│   ├── clean/       # clean 命令实现
+│   └── reset/       # reset 命令实现
 └── main.go          # 程序入口
 ```
 
