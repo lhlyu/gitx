@@ -7,6 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/lhlyu/gitx/internal/git"
+	"github.com/lhlyu/gitx/internal/repo"
 )
 
 var (
@@ -22,7 +23,7 @@ func Run(steps int) error {
 		return err
 	}
 
-	if !isGitRepo(currentDir) {
+	if !repo.IsGitRepo(currentDir) {
 		_, _ = errorColor.Println("❌ 当前目录不是 Git 项目")
 		return nil
 	}
@@ -43,12 +44,4 @@ func Run(steps int) error {
 	}
 
 	return nil
-}
-
-func isGitRepo(dir string) bool {
-	gitPath := filepath.Join(dir, ".git")
-	if _, err := os.Stat(gitPath); err == nil {
-		return true
-	}
-	return false
 }
