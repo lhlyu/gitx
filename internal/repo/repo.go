@@ -83,6 +83,19 @@ func workers(n int) int {
 
 // Process 以并发方式对每个 target 执行 fn，并按 targets 的原始顺序返回结果。
 func Process[T any](targets []Target, fn func(Target) T) []T {
+	return process(targets, nil, fn)
+}
+
+// ProcessWithProgress 与 Process 相同，但在每个任务完成时刷新一行进度（仅终端环境）。
+// label 形如 "拉取中"，输出 "拉取中 [3/20]"。
+func ProcessWithProgress[T any](targets []Target, label string, fn func(Target) T) []T {
+	p := newProgress(label, len(targets))
+	results := process(targets, p.inc, fn)
+	p.finish()
+	return results
+}
+
+func process[T any](targets []Target, onDone func(), fn func(Target) T) []T {
 	results := make([]T, len(targets))
 	if len(targets) == 0 {
 		return results
@@ -97,6 +110,9 @@ func Process[T any](targets []Target, fn func(Target) T) []T {
 			defer wg.Done()
 			for i := range jobs {
 				results[i] = fn(targets[i])
+				if onDone != nil {
+					onDone()
+				}
 			}
 		}()
 	}

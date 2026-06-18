@@ -41,7 +41,7 @@ func Run(depth int) error {
 	}
 
 	client := git.NewClient()
-	results := repo.Process(targets, func(t repo.Target) Result {
+	results := repo.ProcessWithProgress(targets, "拉取中", func(t repo.Target) Result {
 		return pullRepo(client, t)
 	})
 

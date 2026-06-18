@@ -43,7 +43,7 @@ func Run(depth int) error {
 	}
 
 	client := git.NewClient()
-	results := repo.Process(targets, func(t repo.Target) Result {
+	results := repo.ProcessWithProgress(targets, "清理中", func(t repo.Target) Result {
 		return cleanRepo(client, t)
 	})
 
@@ -63,12 +63,12 @@ func Run(depth int) error {
 }
 
 func cleanRepo(client *git.Client, t repo.Target) Result {
-	if _, err := client.RunInDir(t.Path, "reset", "--hard", "HEAD"); err != nil {
-		return Result{Name: t.Name, Success: false, Message: "重置失败"}
+	if out, err := client.RunInDir(t.Path, "reset", "--hard", "HEAD"); err != nil {
+		return Result{Name: t.Name, Success: false, Message: "重置失败: " + repo.FirstLine(out)}
 	}
 
-	if _, err := client.RunInDir(t.Path, "clean", "-fd"); err != nil {
-		return Result{Name: t.Name, Success: false, Message: "清理失败"}
+	if out, err := client.RunInDir(t.Path, "clean", "-fd"); err != nil {
+		return Result{Name: t.Name, Success: false, Message: "清理失败: " + repo.FirstLine(out)}
 	}
 
 	return Result{Name: t.Name, Success: true, Message: "清理成功"}

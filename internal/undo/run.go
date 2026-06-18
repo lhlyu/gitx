@@ -41,7 +41,7 @@ func Run(depth int) error {
 	}
 
 	client := git.NewClient()
-	results := repo.Process(targets, func(t repo.Target) Result {
+	results := repo.ProcessWithProgress(targets, "撤销中", func(t repo.Target) Result {
 		return undoRepo(client, t)
 	})
 
@@ -71,8 +71,8 @@ func undoRepo(client *git.Client, t repo.Target) Result {
 	}
 
 	// 一条命令原子地把暂存区和工作区都还原到 HEAD，避免分两步导致的中间状态。
-	if _, err := client.RunInDir(t.Path, "restore", "--staged", "--worktree", "."); err != nil {
-		return Result{Name: t.Name, Success: false, Message: "撤销失败"}
+	if out, err := client.RunInDir(t.Path, "restore", "--staged", "--worktree", "."); err != nil {
+		return Result{Name: t.Name, Success: false, Message: "撤销失败: " + repo.FirstLine(out)}
 	}
 
 	return Result{Name: t.Name, Success: true, Message: "撤销成功"}
