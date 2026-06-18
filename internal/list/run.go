@@ -2,11 +2,11 @@ package list
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/lhlyu/gitx/internal/git"
+	"github.com/lhlyu/gitx/internal/repo"
 )
 
 var (
@@ -19,7 +19,6 @@ var (
 
 type Project struct {
 	Name    string
-	Path    string
 	IsClean bool
 	Branch  string
 }
@@ -34,15 +33,16 @@ func Run(depth int) error {
 		return err
 	}
 
-	projects, err := scanProjects(currentDir, depth, 0)
-	if err != nil {
-		return err
-	}
-
-	if len(projects) == 0 {
+	targets := repo.Scan(currentDir, depth)
+	if len(targets) == 0 {
 		_, _ = infoColor.Println("未找到 Git 项目")
 		return nil
 	}
+
+	client := git.NewClient()
+	projects := repo.Process(targets, func(t repo.Target) Project {
+		return inspect(client, t)
+	})
 
 	_, _ = titleColor.Println("📁 Git 项目列表")
 	_, _ = infoColor.Println()
@@ -52,13 +52,11 @@ func Run(depth int) error {
 		if branch == "" {
 			branch = "(unknown)"
 		}
+		_, _ = projectColor.Printf("%-50s ", proj.Name)
+		_, _ = infoColor.Printf("%-18s ", branch)
 		if proj.IsClean {
-			_, _ = projectColor.Printf("%-50s ", proj.Name)
-			_, _ = infoColor.Printf("%-18s ", branch)
 			_, _ = cleanColor.Println("✅")
 		} else {
-			_, _ = projectColor.Printf("%-50s ", proj.Name)
-			_, _ = infoColor.Printf("%-18s ", branch)
 			_, _ = dirtyColor.Println("❌")
 		}
 	}
@@ -66,72 +64,47 @@ func Run(depth int) error {
 	return nil
 }
 
-func scanProjects(dir string, maxDepth, currentDepth int) ([]*Project, error) {
-	var projects []*Project
+// inspect 用一次 `git status -b --porcelain` 同时取分支与工作区状态。
+func inspect(client *git.Client, t repo.Target) Project {
+	proj := Project{Name: t.Name}
 
-	entries, err := os.ReadDir(dir)
+	out, err := client.RunInDir(t.Path, "status", "-b", "--porcelain")
 	if err != nil {
-		return nil, err
+		return proj
 	}
 
-	for _, entry := range entries {
-		if !entry.IsDir() {
+	lines := strings.Split(strings.TrimRight(string(out), "\n"), "\n")
+	proj.IsClean = true
+	for i, line := range lines {
+		if i == 0 && strings.HasPrefix(line, "## ") {
+			proj.Branch = parseBranch(line)
 			continue
 		}
-
-		projectPath := filepath.Join(dir, entry.Name())
-		gitPath := filepath.Join(projectPath, ".git")
-
-		// 检查是否是 Git 项目
-		if _, err := os.Stat(gitPath); err == nil || os.IsExist(err) {
-			isClean := checkIfClean(projectPath)
-			branch := currentBranch(projectPath)
-			// 计算相对路径显示
-			relPath, _ := filepath.Rel(dir, projectPath)
-			if currentDepth > 0 {
-				relPath = filepath.Join(strings.Repeat("../", currentDepth), relPath)
-			}
-			projects = append(projects, &Project{
-				Name:    relPath,
-				Path:    projectPath,
-				IsClean: isClean,
-				Branch:  branch,
-			})
-		} else if currentDepth < maxDepth-1 {
-			// 继续递归扫描子目录
-			subProjects, err := scanProjects(projectPath, maxDepth, currentDepth+1)
-			if err == nil {
-				projects = append(projects, subProjects...)
-			}
+		if strings.TrimSpace(line) != "" {
+			proj.IsClean = false
 		}
 	}
 
-	return projects, nil
+	return proj
 }
 
-func checkIfClean(projectPath string) bool {
-	client := git.NewClient()
+// parseBranch 解析 `## main...origin/main [ahead 1]` 这类分支行，
+// 同时兼容 `## No commits yet on main` 与 `## HEAD (no branch)`。
+func parseBranch(line string) string {
+	branch := strings.TrimPrefix(line, "## ")
 
-	out, err := client.RunInDir(projectPath, "status", "--porcelain")
-	if err != nil {
-		return false
-	}
-
-	return strings.TrimSpace(string(out)) == ""
-}
-
-func currentBranch(projectPath string) string {
-	client := git.NewClient()
-
-	out, err := client.RunInDir(projectPath, "rev-parse", "--abbrev-ref", "HEAD")
-	if err != nil {
-		return ""
-	}
-
-	branch := strings.TrimSpace(string(out))
-	if branch == "HEAD" {
+	if strings.HasPrefix(branch, "HEAD (no branch)") {
 		return "(detached)"
 	}
+	if rest, ok := strings.CutPrefix(branch, "No commits yet on "); ok {
+		return strings.TrimSpace(rest)
+	}
 
+	if idx := strings.Index(branch, "..."); idx >= 0 {
+		branch = branch[:idx]
+	}
+	if idx := strings.Index(branch, " "); idx >= 0 {
+		branch = branch[:idx]
+	}
 	return branch
 }

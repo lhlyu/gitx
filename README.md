@@ -19,6 +19,9 @@ go install github.com/lhlyu/gitx@latest
 | `gitx clean [depth]` | 清理仓库并显示清理结果，重置到最新提交状态 ⚠️（默认 depth=0）    |
 | `gitx reset <steps>` | 将当前仓库硬重置到前 N 个提交，即执行 `git reset --hard HEAD~N` ⚠️ |
 
+> 多仓库操作（`list`/`pull`/`clean`/`undo` 在 depth ≥ 1 时）会按 CPU 核数并发执行。
+> 扫描到的嵌套仓库以「相对扫描根目录的路径」显示（如 `nest/c`），顶层仓库则显示目录名。
+
 ## 🛠️ 开发
 
 ### 项目结构
@@ -35,6 +38,7 @@ gitx/
 │   └── reset.go
 ├── internal/         # 内部实现
 │   ├── git/         # Git 客户端封装
+│   ├── repo/        # 仓库扫描与并发执行（公共）
 │   ├── info/        # info 命令实现
 │   ├── list/        # list 命令实现
 │   ├── pull/        # pull 命令实现
