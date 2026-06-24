@@ -6,6 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/lhlyu/gitx/internal/git"
 	"github.com/lhlyu/gitx/internal/repo"
+	"github.com/lhlyu/gitx/internal/term"
 )
 
 var (
@@ -51,7 +52,7 @@ func Run(depth int) error {
 	_, _ = infoColor.Println()
 
 	for _, result := range results {
-		_, _ = projectColor.Printf("%-50s ", result.Name)
+		_, _ = projectColor.Printf("%s ", term.PadRight(result.Name, 50))
 		if result.Success {
 			_, _ = successColor.Printf("✅ %s\n", result.Message)
 		} else {

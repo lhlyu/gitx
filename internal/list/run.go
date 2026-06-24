@@ -6,6 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/lhlyu/gitx/internal/git"
 	"github.com/lhlyu/gitx/internal/repo"
+	"github.com/lhlyu/gitx/internal/term"
 )
 
 var (
@@ -52,8 +53,8 @@ func Run(depth int) error {
 		if branch == "" {
 			branch = "(unknown)"
 		}
-		_, _ = projectColor.Printf("%-50s ", proj.Name)
-		_, _ = infoColor.Printf("%-18s ", branch)
+		_, _ = projectColor.Printf("%s ", term.PadRight(proj.Name, 50))
+		_, _ = infoColor.Printf("%s ", term.PadRight(branch, 18))
 		if proj.IsClean {
 			_, _ = cleanColor.Println("✅")
 		} else {

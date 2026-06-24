@@ -13,6 +13,7 @@ go install github.com/lhlyu/gitx@latest
 | 命令                   | 说明                                      |
 |----------------------|-----------------------------------------|
 | `gitx info`          | 显示仓库信息（分支、远程地址、工作区状态等）                  |
+| `gitx log [n]`       | 查看当前仓库最近 N 条提交记录（默认 n=5，n 必须为正整数）       |
 | `gitx list [depth]`  | 列出指定深度的 Git 项目及其工作区状态（默认 depth=1）       |
 | `gitx status [depth]`| 查看分支、领先/落后远程的提交数及工作区状态（默认 depth=0）      |
 | `gitx pull [depth]`  | 拉取最新代码并显示每个项目是否更新（默认 depth=0，表示只拉取当前目录） |
@@ -34,6 +35,7 @@ gitx/
 ├── cmd/              # 命令定义和注册
 │   ├── root.go
 │   ├── info.go
+│   ├── log.go
 │   ├── list.go
 │   ├── pull.go
 │   ├── undo.go
@@ -42,7 +44,9 @@ gitx/
 ├── internal/         # 内部实现
 │   ├── git/         # Git 客户端封装
 │   ├── repo/        # 仓库扫描、并发执行与状态解析（公共）
+│   ├── term/        # 终端显示宽度与列对齐工具（处理中英文混排）
 │   ├── info/        # info 命令实现
+│   ├── log/         # log 命令实现
 │   ├── list/        # list 命令实现
 │   ├── status/      # status 命令实现
 │   ├── pull/        # pull 命令实现

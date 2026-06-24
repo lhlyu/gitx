@@ -3,10 +3,12 @@ package status
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/lhlyu/gitx/internal/git"
 	"github.com/lhlyu/gitx/internal/repo"
+	"github.com/lhlyu/gitx/internal/term"
 )
 
 var (
@@ -51,7 +53,7 @@ func Run(depth int) error {
 	_, _ = infoColor.Println()
 
 	for _, r := range results {
-		_, _ = projectColor.Printf("%-40s ", r.Name)
+		_, _ = projectColor.Printf("%s ", term.PadRight(r.Name, 40))
 		printStatus(r.Status)
 	}
 
@@ -68,22 +70,24 @@ func printStatus(s repo.Status) {
 	if branch == "" {
 		branch = "(unknown)"
 	}
-	_, _ = infoColor.Printf("%-18s ", branch)
+	_, _ = infoColor.Printf("%s ", term.PadRight(branch, 18))
 
 	// 同步状态：领先/落后远程
 	switch {
 	case s.NoUpstream:
-		_, _ = infoColor.Printf("%-12s ", "无上游")
+		_, _ = infoColor.Printf("%s ", term.PadRight("无上游", 12))
 	case s.Ahead > 0 && s.Behind > 0:
-		_, _ = aheadColor.Printf("↑%d", s.Ahead)
-		_, _ = behindColor.Printf("↓%d", s.Behind)
-		_, _ = infoColor.Printf("%-*s ", pad(s.Ahead, s.Behind), "")
+		ahead := fmt.Sprintf("↑%d", s.Ahead)
+		behind := fmt.Sprintf("↓%d", s.Behind)
+		_, _ = aheadColor.Print(ahead)
+		_, _ = behindColor.Print(behind)
+		_, _ = infoColor.Printf("%s ", padding(term.DisplayWidth(ahead)+term.DisplayWidth(behind), 12))
 	case s.Ahead > 0:
-		_, _ = aheadColor.Printf("%-12s ", fmt.Sprintf("↑%d", s.Ahead))
+		_, _ = aheadColor.Printf("%s ", term.PadRight(fmt.Sprintf("↑%d", s.Ahead), 12))
 	case s.Behind > 0:
-		_, _ = behindColor.Printf("%-12s ", fmt.Sprintf("↓%d", s.Behind))
+		_, _ = behindColor.Printf("%s ", term.PadRight(fmt.Sprintf("↓%d", s.Behind), 12))
 	default:
-		_, _ = infoColor.Printf("%-12s ", "已同步")
+		_, _ = infoColor.Printf("%s ", term.PadRight("已同步", 12))
 	}
 
 	// 工作区状态
@@ -94,11 +98,9 @@ func printStatus(s repo.Status) {
 	}
 }
 
-// pad 计算 "↑x↓y" 之后补齐到 12 列所需的空格数。
-func pad(ahead, behind int) int {
-	w := 2 + len(fmt.Sprint(ahead)) + len(fmt.Sprint(behind))
-	if n := 12 - w; n > 0 {
-		return n
+func padding(currentWidth, targetWidth int) string {
+	if n := targetWidth - currentWidth; n > 0 {
+		return strings.Repeat(" ", n)
 	}
-	return 1
+	return ""
 }
