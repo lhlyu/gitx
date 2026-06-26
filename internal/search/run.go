@@ -11,17 +11,33 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/lhlyu/gitx/internal/git"
 )
 
 var (
 	titleColor = color.New(color.FgCyan, color.Bold)
 	matchColor = color.New(color.FgYellow)
 	infoColor  = color.New(color.FgWhite)
-	errorColor = color.New(color.FgRed, color.Bold)
 )
 
 const defaultMatchLimit = 20
+
+var defaultExcludeGlobs = []string{
+	"!.git/**",
+	"!node_modules/**",
+	"!.idea/**",
+	"!.vscode/**",
+	"!.pnpm-store/**",
+	"!.swc/**",
+	"!.temp/**",
+	"!.rn_temp/**",
+	"!.cache/**",
+	"!.nuxt/**",
+	"!.output/**",
+	"!.data/**",
+	"!.nitro/**",
+	"!.fleet/**",
+	"!.DS_Store",
+}
 
 type Options struct {
 	All bool
@@ -38,18 +54,12 @@ func Run(keyword string, opts Options) error {
 		return err
 	}
 
-	root, err := repoRoot(currentDir)
-	if err != nil {
-		_, _ = errorColor.Println("❌ 当前目录不是 Git 项目")
-		return nil
-	}
-
 	limit := defaultMatchLimit
 	if opts.All {
 		limit = 0
 	}
 
-	result, err := runRipgrep(root, keyword, limit)
+	result, err := runRipgrep(currentDir, keyword, limit)
 	if err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
@@ -83,30 +93,9 @@ func Run(keyword string, opts Options) error {
 	return nil
 }
 
-func repoRoot(dir string) (string, error) {
-	client := git.NewClient()
-	out, err := client.RunInDir(dir, "rev-parse", "--show-toplevel")
-	if err != nil {
-		return "", err
-	}
-	root := strings.TrimSpace(string(out))
-	if root == "" {
-		return "", fmt.Errorf("empty git root")
-	}
-	return root, nil
-}
-
 func runRipgrep(root, keyword string, limit int) (searchResult, error) {
-	cmd := exec.Command(
-		"rg",
-		"--line-number",
-		"--with-filename",
-		"--fixed-strings",
-		"--hidden",
-		"--glob", "!.git/**",
-		"--",
-		keyword,
-	)
+	args := buildRipgrepArgs(keyword)
+	cmd := exec.Command("rg", args...)
 	cmd.Dir = root
 
 	stdout, err := cmd.StdoutPipe()
@@ -133,6 +122,21 @@ func runRipgrep(root, keyword string, limit int) (searchResult, error) {
 	}
 
 	return result, nil
+}
+
+func buildRipgrepArgs(keyword string) []string {
+	args := []string{
+		"--line-number",
+		"--with-filename",
+		"--fixed-strings",
+		"--hidden",
+	}
+
+	for _, glob := range defaultExcludeGlobs {
+		args = append(args, "--glob", glob)
+	}
+
+	return append(args, "--", keyword)
 }
 
 func collectMatches(reader io.Reader, limit int, stop func()) searchResult {

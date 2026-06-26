@@ -1,6 +1,7 @@
 package search
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -35,4 +36,37 @@ func TestCollectMatches(t *testing.T) {
 			t.Fatalf("len(matches) = %d, want %d", got, want)
 		}
 	})
+}
+
+func TestBuildRipgrepArgs(t *testing.T) {
+	args := buildRipgrepArgs("needle")
+
+	for _, want := range []string{
+		"!.git/**",
+		"!node_modules/**",
+		"!.idea/**",
+		"!.vscode/**",
+		"!.pnpm-store/**",
+		"!.swc/**",
+		"!.temp/**",
+		"!.rn_temp/**",
+		"!.cache/**",
+		"!.nuxt/**",
+		"!.output/**",
+		"!.data/**",
+		"!.nitro/**",
+		"!.fleet/**",
+		"!.DS_Store",
+	} {
+		if !slices.Contains(args, want) {
+			t.Fatalf("args should contain exclude glob %q", want)
+		}
+	}
+
+	if got, want := args[len(args)-2], "--"; got != want {
+		t.Fatalf("args second last = %q, want %q", got, want)
+	}
+	if got, want := args[len(args)-1], "needle"; got != want {
+		t.Fatalf("args last = %q, want %q", got, want)
+	}
 }
