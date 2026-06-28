@@ -15,6 +15,7 @@ go install github.com/lhlyu/gitx@latest
 | `gitx info`          | 显示仓库信息（分支、远程地址、工作区状态等）                  |
 | `gitx branch`        | 查看当前仓库的本地分支和远程跟踪分支（基于本地 refs，不主动联网）    |
 | `gitx log [n]`       | 查看当前仓库最近 N 条提交记录（默认 n=5，n 必须为正整数）       |
+| `gitx tag`           | 查看当前仓库的本地 tag，显示类型、时间、目标提交和提交标题（不主动联网） |
 | `gitx search <keyword> [--all]` | 快速查找关键字出现在哪些文件和行号里（依赖 `rg`，按字面量匹配；默认关键字至少 2 个字符、最多显示 20 条，`--all` 解除限制） |
 | `gitx list [depth]`  | 列出指定深度的 Git 项目及其工作区状态（默认 depth=1）       |
 | `gitx status [depth]`| 查看分支、领先/落后远程的提交数及工作区状态（默认 depth=0）      |
@@ -39,6 +40,7 @@ gitx/
 │   ├── info.go
 │   ├── branch.go
 │   ├── log.go
+│   ├── tag.go
 │   ├── search.go
 │   ├── list.go
 │   ├── pull.go
@@ -52,6 +54,7 @@ gitx/
 │   ├── info/        # info 命令实现
 │   ├── branch/      # branch 命令实现
 │   ├── log/         # log 命令实现
+│   ├── tag/         # tag 命令实现
 │   ├── search/      # search 命令实现
 │   ├── list/        # list 命令实现
 │   ├── status/      # status 命令实现
