@@ -16,9 +16,10 @@ func init() {
 var searchAll bool
 
 var searchCmd = &cobra.Command{
-	Use:   "search <keyword>",
-	Short: "快速查找关键字出现在哪些文件里",
-	Long:  "快速查找关键字出现在哪些文件里，按字面量匹配，不把关键字当正则表达式解析。默认关键字至少 2 个字符，最多显示 20 条匹配；使用 --all 解除限制",
+	Use:     "search <keyword>",
+	Aliases: []string{"s"},
+	Short:   "快速查找关键字出现在哪些文件里",
+	Long:    "快速查找关键字出现在哪些文件里，按字面量匹配，不把关键字当正则表达式解析。默认关键字至少 2 个字符，最多显示 20 条匹配；使用 --all 解除限制",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("需要提供 1 个关键字")

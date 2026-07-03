@@ -16,13 +16,14 @@ go install github.com/lhlyu/gitx@latest
 | `gitx branch`        | 查看当前仓库的本地分支和远程跟踪分支（基于本地 refs，不主动联网）    |
 | `gitx log [n]`       | 查看当前仓库最近 N 条提交记录（默认 n=5，n 必须为正整数）       |
 | `gitx tag`           | 查看当前仓库的本地 tag，显示类型、时间、目标提交和提交标题（不主动联网） |
-| `gitx search <keyword> [--all]` | 快速查找关键字出现在哪些文件和行号里（依赖 `rg`，按字面量匹配；默认关键字至少 2 个字符、最多显示 20 条，`--all` 解除限制） |
+| `gitx search <keyword> [--all]` / `gitx s <keyword> [--all]` | 快速查找关键字出现在哪些文件和行号里（依赖 `rg`，按字面量匹配；默认关键字至少 2 个字符、最多显示 20 条，`--all` 解除限制） |
 | `gitx list [depth]`  | 列出指定深度的 Git 项目及其工作区状态（默认 depth=1）       |
 | `gitx status [depth]`| 查看分支、领先/落后远程的提交数及工作区状态（默认 depth=0）      |
-| `gitx pull [depth]`  | 拉取最新代码并显示每个项目是否更新（默认 depth=0，表示只拉取当前目录） |
+| `gitx pull [depth]` / `gitx p [depth]` | 拉取最新代码并显示每个项目是否更新（默认 depth=0，表示只拉取当前目录） |
 | `gitx undo [depth]`  | 撤销工作区和暂存区的修改并显示结果（默认 depth=0）           |
 | `gitx clean [depth]` | 清理仓库并显示清理结果，重置到最新提交状态 ⚠️（默认 depth=0）    |
 | `gitx reset <steps>` | 将当前仓库硬重置到前 N 个提交，即执行 `git reset --hard HEAD~N` ⚠️ |
+| `gitx upgrade` / `gitx up` | 执行 `go install github.com/lhlyu/gitx@latest` 更新 gitx |
 
 > 多仓库操作（`list`/`status`/`pull`/`clean`/`undo` 在 depth ≥ 1 时）会按 CPU 核数并发执行，
 > 执行期间在终端显示进度（`[3/20]`），重定向或管道时自动静默。
@@ -46,7 +47,8 @@ gitx/
 │   ├── pull.go
 │   ├── undo.go
 │   ├── clean.go
-│   └── reset.go
+│   ├── reset.go
+│   └── upgrade.go
 ├── internal/         # 内部实现
 │   ├── git/         # Git 客户端封装
 │   ├── repo/        # 仓库扫描、并发执行与状态解析（公共）
