@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 )
 
@@ -51,6 +52,9 @@ func scan(root, dir string, maxDepth, curDepth int, out *[]Target) {
 		if !entry.IsDir() {
 			continue
 		}
+		if shouldSkipDir(entry.Name()) {
+			continue
+		}
 
 		path := filepath.Join(dir, entry.Name())
 
@@ -63,6 +67,19 @@ func scan(root, dir string, maxDepth, curDepth int, out *[]Target) {
 		} else if curDepth < maxDepth-1 {
 			scan(root, path, maxDepth, curDepth+1, out)
 		}
+	}
+}
+
+func shouldSkipDir(name string) bool {
+	if strings.HasPrefix(name, ".") {
+		return true
+	}
+
+	switch name {
+	case "node_modules", "vendor", "vender", "archive":
+		return true
+	default:
+		return false
 	}
 }
 

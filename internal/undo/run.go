@@ -24,7 +24,7 @@ type Result struct {
 	Message string
 }
 
-func Run(depth int) error {
+func Run(depth int, dryRun bool) error {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return err
@@ -42,11 +42,17 @@ func Run(depth int) error {
 	}
 
 	client := git.NewClient()
-	results := repo.ProcessWithProgress(targets, "撤销中", func(t repo.Target) Result {
-		return undoRepo(client, t)
+	label := "撤销中"
+	title := "↩️  撤销结果"
+	if dryRun {
+		label = "预览中"
+		title = "撤销预览"
+	}
+	results := repo.ProcessWithProgress(targets, label, func(t repo.Target) Result {
+		return undoRepo(client, t, dryRun)
 	})
 
-	_, _ = titleColor.Println("↩️  撤销结果")
+	_, _ = titleColor.Println(title)
 	_, _ = infoColor.Println()
 
 	for _, result := range results {
@@ -61,7 +67,11 @@ func Run(depth int) error {
 	return nil
 }
 
-func undoRepo(client *git.Client, t repo.Target) Result {
+func undoRepo(client *git.Client, t repo.Target, dryRun bool) Result {
+	if dryRun {
+		return Result{Name: t.Name, Success: true, Message: "将执行: git restore --staged --worktree ."}
+	}
+
 	out, err := client.RunInDir(t.Path, "status", "--porcelain")
 	if err != nil {
 		return Result{Name: t.Name, Success: false, Message: "状态获取失败"}

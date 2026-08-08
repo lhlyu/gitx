@@ -57,6 +57,21 @@ func TestScan(t *testing.T) {
 	})
 }
 
+func TestScanSkipsDefaultExcludedDirectories(t *testing.T) {
+	root := t.TempDir()
+	makeRepo(t, filepath.Join(root, "node_modules"))
+	makeRepo(t, filepath.Join(root, "vendor"))
+	makeRepo(t, filepath.Join(root, "vender"))
+	makeRepo(t, filepath.Join(root, "archive"))
+	makeRepo(t, filepath.Join(root, ".hidden"))
+	makeRepo(t, filepath.Join(root, "project"))
+
+	got := Scan(root, 1)
+	if len(got) != 1 || got[0].Name != "project" {
+		t.Fatalf("got %+v, want only project", got)
+	}
+}
+
 func equal(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

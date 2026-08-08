@@ -17,7 +17,7 @@ var (
 	warningColor = color.New(color.FgYellow, color.Bold)
 )
 
-func Run(steps int) error {
+func Run(steps int, dryRun bool) error {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return err
@@ -25,6 +25,11 @@ func Run(steps int) error {
 
 	if !repo.IsGitRepo(currentDir) {
 		_, _ = errorColor.Println("❌ 当前目录不是 Git 项目")
+		return nil
+	}
+
+	if dryRun {
+		_, _ = warningColor.Printf("预览模式，将执行: git reset --hard HEAD~%d\n", steps)
 		return nil
 	}
 

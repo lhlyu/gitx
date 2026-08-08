@@ -12,6 +12,7 @@ func init() {
 var infoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "显示仓库信息",
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return info.Run()
 	},

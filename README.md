@@ -19,16 +19,17 @@ go install github.com/lhlyu/gitx@latest
 | `gitx search <keyword> [--all]` / `gitx s <keyword> [--all]` | 快速查找关键字出现在哪些文件和行号里（依赖 `rg`，按字面量匹配；默认关键字至少 2 个字符、最多显示 20 条，`--all` 解除限制） |
 | `gitx list [depth]`  | 列出指定深度的 Git 项目及其工作区状态（默认 depth=1）       |
 | `gitx status [depth]`| 查看分支、领先/落后远程的提交数及工作区状态（默认 depth=0）      |
-| `gitx pull [depth]` / `gitx p [depth]` | 拉取最新代码并显示每个项目是否更新（默认 depth=0，表示只拉取当前目录） |
-| `gitx undo [depth]`  | 撤销工作区和暂存区的修改并显示结果（默认 depth=0）           |
-| `gitx clean [depth]` | 清理仓库并显示清理结果，重置到最新提交状态 ⚠️（默认 depth=0）    |
-| `gitx reset <steps>` | 将当前仓库硬重置到前 N 个提交，即执行 `git reset --hard HEAD~N` ⚠️ |
+| `gitx pull [depth]` / `gitx p [depth]` | 拉取最新代码，可使用 `--rebase`、`--ff-only`、`--prune`（未传 depth 时，当前目录是仓库则只拉当前仓库，否则扫描直接子目录） |
+| `gitx undo [depth] -n` | 撤销工作区和暂存区的修改并显示结果（默认 depth=0；`-n` 仅预览） |
+| `gitx clean [depth] -n` | 清理仓库并显示清理结果，重置到最新提交状态 ⚠️（默认 depth=0；`-n` 仅预览） |
+| `gitx reset <steps> -n` | 将当前仓库硬重置到前 N 个提交，即执行 `git reset --hard HEAD~N` ⚠️（`-n` 仅预览） |
 | `gitx upgrade` / `gitx up` | 执行 `go install github.com/lhlyu/gitx@latest` 更新 gitx |
 
 > 多仓库操作（`list`/`status`/`pull`/`clean`/`undo` 在 depth ≥ 1 时）会按 CPU 核数并发执行，
 > 执行期间在终端显示进度（`[3/20]`），重定向或管道时自动静默。
 > `status` 的领先/落后基于上次 `fetch` 的远程信息，不会主动联网。
 > 扫描到的嵌套仓库以「相对扫描根目录的路径」显示（如 `nest/c`），顶层仓库则显示目录名。
+> 批量扫描默认跳过隐藏目录、`node_modules`、`vendor`、`vender` 和 `archive`。
 
 ## 🛠️ 开发
 

@@ -7,7 +7,7 @@ import (
 )
 
 // version 版本号，每次修改提交时同步更新为当时的日期
-const version = "2026.07.03"
+const version = "2026.08.08"
 
 var rootCmd = &cobra.Command{
 	Use:     "gitx",

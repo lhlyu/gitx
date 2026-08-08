@@ -18,17 +18,28 @@ var (
 	infoColor    = color.New(color.FgWhite)
 )
 
+// AutoDepth 根据当前目录是否为 Git 仓库自动选择扫描深度。
+const AutoDepth = -1
+
 type Result struct {
 	Name    string
 	Success bool
 	Message string
 }
 
-func Run(depth int) error {
+type Options struct {
+	Depth  int
+	Rebase bool
+	FFOnly bool
+	Prune  bool
+}
+
+func Run(options Options) error {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
+	depth := resolveDepth(currentDir, options.Depth)
 
 	if depth == 0 && !repo.IsGitRepo(currentDir) {
 		_, _ = errorColor.Println("❌ 当前目录不是 Git 项目")
@@ -43,7 +54,7 @@ func Run(depth int) error {
 
 	client := git.NewClient()
 	results := repo.ProcessWithProgress(targets, "拉取中", func(t repo.Target) Result {
-		return pullRepo(client, t)
+		return pullRepo(client, t, options)
 	})
 
 	_, _ = titleColor.Println("🔄 拉取代码结果")
@@ -61,8 +72,18 @@ func Run(depth int) error {
 	return nil
 }
 
-func pullRepo(client *git.Client, t repo.Target) Result {
-	out, err := client.RunInDir(t.Path, "pull")
+func resolveDepth(currentDir string, depth int) int {
+	if depth != AutoDepth {
+		return depth
+	}
+	if repo.IsGitRepo(currentDir) {
+		return 0
+	}
+	return 1
+}
+
+func pullRepo(client *git.Client, t repo.Target, options Options) Result {
+	out, err := client.RunInDir(t.Path, pullArgs(options)...)
 	if err != nil {
 		return Result{
 			Name:    t.Name,
@@ -76,6 +97,20 @@ func pullRepo(client *git.Client, t repo.Target) Result {
 		Success: true,
 		Message: classifyPullOutput(string(out)),
 	}
+}
+
+func pullArgs(options Options) []string {
+	args := []string{"pull"}
+	if options.Rebase {
+		args = append(args, "--rebase")
+	}
+	if options.FFOnly {
+		args = append(args, "--ff-only")
+	}
+	if options.Prune {
+		args = append(args, "--prune")
+	}
+	return args
 }
 
 func classifyPullOutput(out string) string {
